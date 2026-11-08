@@ -32,7 +32,8 @@
   //#define MARAUDER_C5
   //#define MARAUDER_CARDPUTER
   //#define MARAUDER_CARDPUTER_ADV
-  //#define MARAUDER_V8
+  //#define MARAUDER_V8            // V8 官方 4in1：TFT/SD 走 SPI2 原生 IOMUX 引脚
+  //#define MARAUDER_V8_MODIFIED   // V8 改版：TFT 引脚经 GPIO 矩阵映射；与 MARAUDER_V8 互斥
   //#define MARAUDER_MINI_V3
   //#define DUAL_MINI_C5
   #define MARAUDER_XIAOMIAO   // 小喵掌机: 1.8" ST7735 160x128, ESP32, 共享VSPI
@@ -126,6 +127,8 @@
     #define HARDWARE_NAME "ESP32-C5 DevKit"
   #elif defined(MARAUDER_V8)
     #define HARDWARE_NAME "Marauder v8"
+  #elif defined(MARAUDER_V8_MODIFIED)
+    #define HARDWARE_NAME "Marauder v8 (modified)"
   #elif defined(MARAUDER_MINI_V3)
     #define HARDWARE_NAME "Marauder Mini v3"
   #elif defined(DUAL_MINI_C5)
@@ -507,7 +510,7 @@
     #define HAS_IDF_3
   #endif
 
-  #ifdef MARAUDER_V8
+  #if defined(MARAUDER_V8) || defined(MARAUDER_V8_MODIFIED)
     #define HAS_TOUCH
     //#define HAS_FLIPPER_LED
     //#define FLIPPER_ZERO_HAT
@@ -1231,37 +1234,67 @@
       #define KIT_LED_BUILTIN 13
     #endif
 
-    #if defined(MARAUDER_V8)
+    #if defined(MARAUDER_V8) || defined(MARAUDER_V8_MODIFIED)
       #define CHAN_PER_PAGE 7
 
       #define SCREEN_CHAR_WIDTH 40
       #define HAS_ILI9341
 
-      // Shared TFT/SD SPI bus pins (verified V8 4-in-1 wiring).
-      #ifndef TFT_MISO
-        #define TFT_MISO 5
-      #endif
-      #ifndef TFT_MOSI
-        #define TFT_MOSI 1
-      #endif
-      #ifndef TFT_SCLK
-        #define TFT_SCLK 9
-      #endif
-      #ifndef TFT_CS
-        #define TFT_CS 24
-      #endif
-      #ifndef TFT_DC
-        #define TFT_DC 10
-      #endif
-      #ifndef TFT_RST
-        #define TFT_RST 0
-      #endif
-      #ifndef TOUCH_CS
-        #define TOUCH_CS 4
-      #endif
+      // Two V8 wiring revisions exist. Their firmware is identical; only the
+      // pin numbers differ, so each revision gets its own independent macro.
+      #if defined(MARAUDER_V8)
+        // Official 4-in-1 V8: TFT/SD use the native ESP32-C5 SPI2 IOMUX pins.
+        #ifndef TFT_MISO
+          #define TFT_MISO 2
+        #endif
+        #ifndef TFT_MOSI
+          #define TFT_MOSI 7
+        #endif
+        #ifndef TFT_SCLK
+          #define TFT_SCLK 6
+        #endif
+        #ifndef TFT_CS
+          #define TFT_CS 23
+        #endif
+        #ifndef TFT_DC
+          #define TFT_DC 24
+        #endif
+        #ifndef TFT_RST
+          #define TFT_RST 0
+        #endif
+        #ifndef TOUCH_CS
+          #define TOUCH_CS 3
+        #endif
 
-      // The TFT_eSPI User_Setup for this board does not define a backlight pin.
-      #define TFT_BL 23
+        // The TFT_eSPI User_Setup for this board does not define a backlight pin.
+        #define TFT_BL 8
+      #else
+        // Modified V8: TFT pins are routed through the GPIO matrix, not IOMUX.
+        #ifndef TFT_MISO
+          #define TFT_MISO 5
+        #endif
+        #ifndef TFT_MOSI
+          #define TFT_MOSI 1
+        #endif
+        #ifndef TFT_SCLK
+          #define TFT_SCLK 9
+        #endif
+        #ifndef TFT_CS
+          #define TFT_CS 24
+        #endif
+        #ifndef TFT_DC
+          #define TFT_DC 10
+        #endif
+        #ifndef TFT_RST
+          #define TFT_RST 0
+        #endif
+        #ifndef TOUCH_CS
+          #define TOUCH_CS 4
+        #endif
+
+        // The TFT_eSPI User_Setup for this board does not define a backlight pin.
+        #define TFT_BL 23
+      #endif
     
       #define BANNER_TEXT_SIZE 2
 
@@ -2106,7 +2139,7 @@
     //#define BUTTON_ARRAY_LEN 5
   #endif
 
-  #if defined(MARAUDER_V8)
+  #if defined(MARAUDER_V8) || defined(MARAUDER_V8_MODIFIED)
     #define BANNER_TIME 100
     
     #define COMMAND_PREFIX "!"
@@ -2443,6 +2476,10 @@
     #endif
 
     #ifdef MARAUDER_V8
+      #define SD_CS 10
+    #endif
+
+    #ifdef MARAUDER_V8_MODIFIED
       #define SD_CS 6
     #endif
 
@@ -2549,7 +2586,7 @@
     #define MEM_LOWER_LIM 10000
   #elif defined(MARAUDER_C5)
     #define MEM_LOWER_LIM 10000
-  #elif defined(MARAUDER_V8)
+  #elif defined(MARAUDER_V8) || defined(MARAUDER_V8_MODIFIED)
     #define MEM_LOWER_LIM 10000
   #elif defined(MARAUDER_MINI_V3)
     #define MEM_LOWER_LIM 10000
@@ -2573,7 +2610,7 @@
       #define PIN 22
     #elif defined(MARAUDER_C5)
       #define PIN 27
-    #elif defined(MARAUDER_V8)
+    #elif defined(MARAUDER_V8) || defined(MARAUDER_V8_MODIFIED)
       #define PIN 27
     #elif defined(MARAUDER_CARDPUTER_ADV)
       #define PIN 21
@@ -2676,7 +2713,7 @@
       #define GPS_SERIAL_INDEX 1
       #define GPS_TX 14
       #define GPS_RX 13
-    #elif defined(MARAUDER_V8)
+    #elif defined(MARAUDER_V8) || defined(MARAUDER_V8_MODIFIED)
       #define GPS_SERIAL_INDEX 1
       #define GPS_TX 13
       #define GPS_RX 14
@@ -2755,6 +2792,11 @@
     #endif
 
     #ifdef MARAUDER_V8
+      #define I2C_SCL 4
+      #define I2C_SDA 5
+    #endif
+
+    #ifdef MARAUDER_V8_MODIFIED
       #define I2C_SCL 26
       #define I2C_SDA 8
     #endif
@@ -2786,7 +2828,7 @@
     #define MARAUDER_TITLE_BYTES 13578
   #elif defined(MARAUDER_C5)
     #define MARAUDER_TITLE_BYTES 13578
-  #elif defined(MARAUDER_V8)
+  #elif defined(MARAUDER_V8) || defined(MARAUDER_V8_MODIFIED)
     #define MARAUDER_TITLE_BYTES 13578
   #elif defined(MARAUDER_MINI_V3)
     #define MARAUDER_TITLE_BYTES 13578
@@ -2848,7 +2890,7 @@
       #define SD_SCK  6
     #endif
 
-    #ifdef MARAUDER_V8
+    #if defined(MARAUDER_V8) || defined(MARAUDER_V8_MODIFIED)
       #define SD_MISO TFT_MISO
       #define SD_MOSI TFT_MOSI
       #define SD_SCK  TFT_SCLK

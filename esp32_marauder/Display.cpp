@@ -148,7 +148,7 @@ void Display::setCalData(bool landscape) {
         uint16_t calData[5] = { 275, 3494, 361, 3528, 4 }; // tft.setRotation(0); // Portrait with TFT Shield
       #elif defined(MARAUDER_CYD_3_5_INCH)
         uint16_t calData[5] = { 239, 3560, 262, 3643, 4 };
-      #elif defined(MARAUDER_V8)
+      #elif defined(MARAUDER_V8) || defined(MARAUDER_V8_MODIFIED)
         //uint16_t calData[5] = { 351, 3279, 214, 3394, 2 };
         uint16_t calData[5] = { 312, 3431, 191, 3456, 2 };
       #elif defined(TFT_DIY)
@@ -163,7 +163,7 @@ void Display::setCalData(bool landscape) {
         uint16_t calData[5] = { 391, 3491, 266, 3505, 7 }; // Landscape TFT Shield
       #elif defined(MARAUDER_CYD_3_5_INCH)
         uint16_t calData[5] = { 272, 3648, 234, 3565, 7 };
-      #elif defined(MARAUDER_V8)
+      #elif defined(MARAUDER_V8) || defined(MARAUDER_V8_MODIFIED)
         uint16_t calData[5] = { 213, 3396, 350, 3275, 1 };
       #else if defined(TFT_DIY)
         uint16_t calData[5] = { 213, 3469, 320, 3446, 1 }; // Landscape TFT DIY
