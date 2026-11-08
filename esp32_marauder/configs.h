@@ -1237,28 +1237,31 @@
       #define SCREEN_CHAR_WIDTH 40
       #define HAS_ILI9341
 
-      // Shared TFT/SD SPI bus pins.
+      // Shared TFT/SD SPI bus pins (verified V8 4-in-1 wiring).
       #ifndef TFT_MISO
-        #define TFT_MISO 2
+        #define TFT_MISO 5
       #endif
       #ifndef TFT_MOSI
-        #define TFT_MOSI 7
+        #define TFT_MOSI 1
       #endif
       #ifndef TFT_SCLK
-        #define TFT_SCLK 6
+        #define TFT_SCLK 9
       #endif
       #ifndef TFT_CS
-        #define TFT_CS 23
+        #define TFT_CS 24
       #endif
       #ifndef TFT_DC
-        #define TFT_DC 24
+        #define TFT_DC 10
+      #endif
+      #ifndef TFT_RST
+        #define TFT_RST 0
       #endif
       #ifndef TOUCH_CS
-        #define TOUCH_CS 3
+        #define TOUCH_CS 4
       #endif
 
       // The TFT_eSPI User_Setup for this board does not define a backlight pin.
-      #define TFT_BL 8
+      #define TFT_BL 23
     
       #define BANNER_TEXT_SIZE 2
 
@@ -2440,7 +2443,7 @@
     #endif
 
     #ifdef MARAUDER_V8
-      #define SD_CS 10
+      #define SD_CS 6
     #endif
 
     #ifdef MARAUDER_MINI_V3
@@ -2752,8 +2755,8 @@
     #endif
 
     #ifdef MARAUDER_V8
-      #define I2C_SCL 4
-      #define I2C_SDA 5
+      #define I2C_SCL 26
+      #define I2C_SDA 8
     #endif
 
   #endif

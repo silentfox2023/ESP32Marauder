@@ -36,11 +36,11 @@ Check out the project [wiki](https://github.com/justcallmekoko/ESP32Marauder/wik
 |---|---|---|---|---|---|---|
 | XiaoMiao（小喵掌机） | `MARAUDER_XIAOMIAO`（继承 `MARAUDER_MINI`） | `esp32:esp32:esp32:PartitionScheme=huge_app` | ESP32（WROOM-32） | ST7735 1.8"，128×160 面板 → 应用层 160×128 横屏，硬件 VSPI 10MHz | `huge_app` | 2,022,031 bytes（64%） |
 | ESP32-C5 Mini V3 | `MARAUDER_MINI_V3` + `DUAL_MINI_C5` | `esp32:esp32:esp32c5:PartitionScheme=huge_app` | ESP32-C5N16R8 | ST7735 128×128 竖屏，bit-bang SPI 写 4MHz / 读 2MHz | `huge_app` | 2,277,234 bytes（72%） |
-| Marauder V8（改版） | `MARAUDER_V8` | `esp32:esp32:esp32c5:PartitionScheme=huge_app` | ESP32-C5（N16R8，板载无 PSRAM） | ILI9341 240×320 + XPT2046 触摸，共享 SPI | `huge_app` | 现有文档未记录 |
+| Marauder V8（4in1） | `MARAUDER_V8` | `esp32:esp32:esp32c5:PartitionScheme=huge_app` | ESP32-C5（N16R8 模组，固件未启用 PSRAM） | ILI9341 240×320 + XPT2046 触摸，共享 SPI | `huge_app` | 2,312,788 bytes（73%） |
 
 > 三套板型都必须使用 `huge_app`（3MB No OTA）分区。Marauder 固件本身已超过默认 APP 分区，Mini V3 / V8 的 C5 构建尤其需要。
 >
-> 体积说明：表中体积为 v1.20.0 工程实测值；本仓库 v1.12.1 基线的 XiaoMiao 构建约 1.73MB，属正常范围。
+> 体积说明：表中体积为 v1.20.0 工程实测值；V8 数值由参考工程 16MB 整片镜像中 app 分区解析得出（非编译日志）。本仓库 v1.12.1 基线的 XiaoMiao 构建约 1.73MB，属正常范围。
 
 ### 通用前提
 
@@ -50,7 +50,7 @@ Check out the project [wiki](https://github.com/justcallmekoko/ESP32Marauder/wik
 
 ### ⚠️ 必读：板型继承宏必须前置
 
-自定义板型如果依赖 `MARAUDER_MINI` 的既有配置（XiaoMiao、V8 等继承型板型），必须在 `configs.h` 的 `//// BOARD TARGETS` 区**紧跟着**定义：
+自定义板型如果依赖 `MARAUDER_MINI` 的既有配置（目前只有 XiaoMiao），必须在 `configs.h` 的 `//// BOARD TARGETS` 区**紧跟着**定义：
 
 ```c
 #if defined(MARAUDER_XIAOMIAO) && !defined(MARAUDER_MINI)
@@ -149,45 +149,49 @@ V8 与 XiaoMiao 移植时都踩过这个坑，修复方式就是把继承宏挪�
 #define SPI_READ_FREQUENCY   2000000   // 2MHz 读
 ```
 
-### 3. Marauder V8（ESP32-C5 改版，4in1）
+### 3. Marauder V8（ESP32-C5，4in1）
 
 - 启用：`#define MARAUDER_V8`
-- 编译目标：`esp32:esp32:esp32c5:PartitionScheme=huge_app`（参考文档的构建命令还会带 `FlashSize=8M`）
-- 屏幕：ILI9341 240×320 + XPT2046 电阻触摸，TFT / 触摸 / SD 共用一条 SPI 总线
-- 板载无 PSRAM：`configs.h` 的 V8 块中 `HAS_PSRAM` 已注释；`WiFiScan` / `EvilPortal` 里 `ps_malloc` 需要有 `malloc` 兜底
-- `HAS_ACT_LED` 未启用
+- 编译目标：`esp32:esp32:esp32c5:PartitionScheme=huge_app`（参考工程为 16MB flash；其整片镜像中的分区表为 app0 3MB + spiffs 0xE0000 + coredump，与 `huge_app` 完全吻合）
+- 屏幕：ILI9341 2.8" 240×320 + XPT2046 电阻触摸，TFT / 触摸 / SD 共用一条 SPI 总线（SCLK=9 / MOSI=1 / MISO=5）
+- PSRAM：参考工程目录名带 `WithPSRAM8M`、模组为 N16R8，但 `configs.h` 的 V8 块里 `HAS_PSRAM` 仍是注释状态，**固件不使用 PSRAM**（`WiFiScan` / `EvilPortal` 走 `malloc` 兜底）。参考工程没有 `sketch.yaml` 或构建记录，无法确认 FQBN 是否另开了 PSRAM 选项，也无法确认 QSPI/OPI
+- `HAS_ACT_LED` 未启用（`ACT_LED_PIN` 有定义但宏被注释）
+- "4in1" 是硬件模块命名，参考工程没有运行期多板型选择菜单，固件仍是单一 `MARAUDER_V8` 目标
+- 固件体积：约 2,312,788 bytes（app 分区，约占 3MB 的 73%，由参考工程 16MB 整片镜像解析）
 
 | 功能 | 引脚 |
 |---|---|
-| TFT MISO | 2 |
-| TFT MOSI | 7 |
-| TFT SCLK | 6 |
-| TFT CS | 23 |
-| TFT DC | 24 |
-| TOUCH_CS | 3 |
-| TFT BL | 8 |
-| SD CS | 10（与 TFT 共享 MISO / MOSI / SCLK） |
+| TFT MISO | 5 |
+| TFT MOSI | 1 |
+| TFT SCLK | 9 |
+| TFT CS | 24 |
+| TFT DC | 10 |
+| TFT RST | 0（`configs.h` 与 `User_Setup.h` 都定义为 0） |
+| TOUCH_CS | 4 |
+| TFT BL | 23 |
+| SD CS | 6（与 TFT 共享 MISO 5 / MOSI 1 / SCLK 9） |
+| I2C SDA / SCL | 8 / 26（电池电量计） |
 | GPS TX / RX | 13 / 14（Serial1，**写反即 GPS Not Found**） |
 
-> 本仓库统一采用上表引脚，与 `configs.h` 的 `MARAUDER_V8` 块及 [C5 V8 移植与修改说明书](docs/board_adapters/C5_V8_移植与修改说明书.md) 完全一致：MISO=2 / MOSI=7 / SCLK=6 / CS=23 / DC=24 / TOUCH_CS=3 / BL=8 / SD_CS=10。早期标准 V8 的另一套布线仅作为历史备注记录在说明书 1.1 节，不在此处生效。
+> 本仓库与参考工程 `configs.h` 的 `MARAUDER_V8` 块完全一致：MISO=5 / MOSI=1 / SCLK=9 / CS=24 / DC=10 / RST=0 / TOUCH_CS=4 / BL=23 / SD_CS=6 / I2C=8/26 / GPS=13/14。不存在第二套并行的引脚数字。
 
 - TFT_eSPI `User_Setup.h` 关键项：
 
 ```c
 #define ILI9341_DRIVER
-#define TFT_MISO 2
-#define TFT_MOSI 7
-#define TFT_SCLK 6
-#define TFT_CS   23
-#define TFT_DC   24
+#define TFT_MISO 5
+#define TFT_MOSI 1
+#define TFT_SCLK 9
+#define TFT_CS   24
+#define TFT_DC   10
 #define TFT_RST  0
-#define TOUCH_CS 3
-// 背光不写进 User_Setup.h，由 configs.h 的 TFT_BL 8 控制
+#define TOUCH_CS 4
+// 背光不写进 User_Setup.h，由 configs.h 的 TFT_BL 23 控制
 #define TFT_WIDTH  240
 #define TFT_HEIGHT 320
-#define SPI_FREQUENCY        10000000   // 先用 10MHz 求稳，再往上试
-#define SPI_READ_FREQUENCY   20000000
+#define SPI_FREQUENCY        10000000   // 稳定值；可再试 27MHz
 #define SPI_TOUCH_FREQUENCY  2500000
+// 参考工程未记录 SPI_READ_FREQUENCY，未定义时沿用写频率
 // 不要打开 USE_HSPI_PORT
 ```
 
@@ -203,16 +207,16 @@ Arduino IDE 编译时只认全局库文件，切换板型必须逐项改完再**
 | 配置项 | XiaoMiao | ESP32-C5 Mini V3 | Marauder V8 |
 |---|---|---|---|
 | 驱动 / tab | `ST7735_DRIVER` + `ST7735_GREENTAB` | `ST7735_DRIVER` + `ST7735_GREENTAB3` | `ILI9341_DRIVER` |
-| 引脚（MISO/MOSI/SCLK/CS/DC） | -1 / 23 / 18 / 5 / 4 | 24 / 0 / 26 / 25 / 23 | 2 / 7 / 6 / 23 / 24 |
-| 复位 / 背光 | RST=-1，BL=32（空脚） | RST=1，BL=3 | RST=0，BL=8（`User_Setup.h` 不定义 BL） |
+| 引脚（MISO/MOSI/SCLK/CS/DC） | -1 / 23 / 18 / 5 / 4 | 24 / 0 / 26 / 25 / 23 | 5 / 1 / 9 / 24 / 10 |
+| 复位 / 背光 | RST=-1，BL=32（空脚） | RST=1，BL=3 | RST=0，BL=23（`User_Setup.h` 不定义 BL） |
 | 分辨率 | 128×160 | 128×128 | 240×320 |
-| SPI 频率 | 10MHz | 4MHz 写 / 2MHz 读 | 10MHz（读 20MHz，触摸 2.5MHz） |
-| 其他 | `TFT_INVERSION_OFF`、`TFT_RGB_ORDER TFT_BGR` | bit-bang，禁止 `USE_HSPI_PORT` / `USE_FSPI_PORT` | `TOUCH_CS`=3，不开 `USE_HSPI_PORT` |
+| SPI 频率 | 10MHz | 4MHz 写 / 2MHz 读 | 10MHz 写（可试 27MHz），触摸 2.5MHz |
+| 其他 | `TFT_INVERSION_OFF`、`TFT_RGB_ORDER TFT_BGR` | bit-bang，禁止 `USE_HSPI_PORT` / `USE_FSPI_PORT` | `TOUCH_CS`=4，不开 `USE_HSPI_PORT` |
 
 ### 切换板型步骤
 
 1. 在 `esp32_marauder/configs.h` 的 `//// BOARD TARGETS` 区注释掉当前板型，启用目标板型宏；
-2. 若目标板型是继承型（如 XiaoMiao / V8），**紧接着**定义 `MARAUDER_MINI`（见上文"板型继承宏必须前置"）；
+2. 若目标板型是继承型（如 XiaoMiao），**紧接着**定义 `MARAUDER_MINI`（见上文"板型继承宏必须前置"）；V8 不继承 `MARAUDER_MINI`；
 3. 同步修改全局 TFT_eSPI `User_Setup.h`：驱动、引脚、分辨率、SPI 频率、tab 变体；
 4. 切换编译目标：C5 板型用 `esp32:esp32:esp32c5`，经典 ESP32 用 `esp32:esp32:esp32`；分区统一 `PartitionScheme=huge_app`；
 5. 完整重编译（不要依赖增量缓存），确认固件体积与同版本正常构建一致、Display 代码已编入；
