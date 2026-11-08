@@ -220,8 +220,9 @@ uint32_t currentTime  = 0;
 #endif
 
 #ifdef HAS_C5_SD
-  SPIClass sharedSPI(SPI);
-  SDInterface sd_obj = SDInterface(&sharedSPI, SD_CS);
+  // The display, touch and SD share the hardware SPI bus, so they must all use
+  // the same SPIClass instance for transactions to exclude each other.
+  SDInterface sd_obj = SDInterface(&SPI, SD_CS);
 #endif
 
 void setup()
@@ -238,13 +239,19 @@ void setup()
 
   Serial.begin(115200);
 
+  // Bit-banged TFT transfers are CPU-bound on ESP32-C5: every SPI bit costs
+  // register writes, so the core must run at the highest supported clock.
+  #if defined(CONFIG_IDF_TARGET_ESP32C5)
+    if (getCpuFrequencyMhz() < 240) {
+      setCpuFrequencyMhz(240);
+    }
+    Serial.print(F("CPU: "));
+    Serial.print(getCpuFrequencyMhz());
+    Serial.println(F(" MHz"));
+  #endif
+
   while(!Serial)
     delay(10);
-
-  #if defined(HAS_C5_SD)
-    sharedSPI.begin(SD_SCK, SD_MISO, SD_MOSI);
-    delay(100);
-  #endif
 
   #if defined(HAS_SD) && defined(MARAUDER_MINI)
     // Initialize SD SPI bus BEFORE TFT init to avoid bus conflicts.

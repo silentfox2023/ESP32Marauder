@@ -87,6 +87,9 @@ bool SDInterface::initSD() {
       mounted = SD.begin(SD_CS, *(this->spiExt));
 
     #elif defined(HAS_C5_SD)
+      // The display driver attaches the same bus; starting it here (before the
+      // first SD transaction) is required because SD.begin() skips it on C5.
+      _spi->begin(SD_SCK, SD_MISO, SD_MOSI, -1);
       mounted = SD.begin(SD_CS, *_spi);
 
     #else

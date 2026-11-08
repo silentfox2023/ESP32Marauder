@@ -35,7 +35,7 @@
   //#define MARAUDER_V8
   //#define MARAUDER_MINI_V3
   //#define DUAL_MINI_C5
-  #define MARAUDER_MINI_XIAOMIAO   // 小喵掌机: 1.8" ST7735 160x128, ESP32, 共享VSPI
+  #define MARAUDER_XIAOMIAO   // 小喵掌机: 1.8" ST7735 160x128, ESP32, 共享VSPI
   //// END BOARD TARGETS
 
   //=================================================================
@@ -49,7 +49,7 @@
   // 屏幕驱动: ST7735 GREENTAB3, BGR颜色, 横屏rotation=3, SPI 10MHz
   // 配置文件: User_Setup_marauder_mini.h (TFT_eSPI库配置)
   //=================================================================
-  #if defined(MARAUDER_MINI_XIAOMIAO)
+  #if defined(MARAUDER_XIAOMIAO)
     #ifndef MARAUDER_MINI
       #define MARAUDER_MINI   // 继承Marauder Mini的全部硬件配置
     #endif
@@ -86,7 +86,7 @@
     #define HARDWARE_NAME "M5 Cardputer"
   #elif defined(MARAUDER_CARDPUTER_ADV)
     #define HARDWARE_NAME "M5 Cardputer ADV"
-  #elif defined(MARAUDER_MINI_XIAOMIAO)
+  #elif defined(MARAUDER_XIAOMIAO)
     #define HARDWARE_NAME "XiaoMiao Mini"
   #elif defined(MARAUDER_MINI)
     #define HARDWARE_NAME "Marauder Mini"
@@ -523,7 +523,7 @@
     #define HAS_SD
     #define USE_SD
     #define HAS_DUAL_BAND
-    #define HAS_PSRAM
+    //#define HAS_PSRAM
     //#define HAS_TEMP_SENSOR
     #define HAS_NIMBLE_2
     #define HAS_IDF_3
@@ -827,17 +827,19 @@
 
     #ifdef MARAUDER_MINI_V3
       #ifndef DUAL_MINI_C5
-        #define L_BTN 0
-        #define C_BTN 1
-        #define U_BTN 8//4
-        #define R_BTN 9//8
-        #define D_BTN 4//9
+        // ESP32-C5 base Mini V3 button mapping
+        #define L_BTN 10
+        #define C_BTN 9
+        #define U_BTN 6
+        #define R_BTN 7
+        #define D_BTN 8
       #else
-        #define L_BTN 0
-        #define C_BTN 1
-        #define U_BTN 4
+        // DUAL_MINI_C5: L<->U and R<->D swapped vs base Mini V3
+        #define L_BTN 6
+        #define C_BTN 9
+        #define U_BTN 7
         #define R_BTN 8
-        #define D_BTN 9
+        #define D_BTN 10
       #endif
 
       #define HAS_L
@@ -1234,6 +1236,29 @@
 
       #define SCREEN_CHAR_WIDTH 40
       #define HAS_ILI9341
+
+      // Shared TFT/SD SPI bus pins.
+      #ifndef TFT_MISO
+        #define TFT_MISO 2
+      #endif
+      #ifndef TFT_MOSI
+        #define TFT_MOSI 7
+      #endif
+      #ifndef TFT_SCLK
+        #define TFT_SCLK 6
+      #endif
+      #ifndef TFT_CS
+        #define TFT_CS 23
+      #endif
+      #ifndef TFT_DC
+        #define TFT_DC 24
+      #endif
+      #ifndef TOUCH_CS
+        #define TOUCH_CS 3
+      #endif
+
+      // The TFT_eSPI User_Setup for this board does not define a backlight pin.
+      #define TFT_BL 8
     
       #define BANNER_TEXT_SIZE 2
 
@@ -1960,15 +1985,20 @@
       #define CHAN_PER_PAGE 7
 
       #define SCREEN_CHAR_WIDTH 40
-      #define TFT_MISO 19
-      #define TFT_MOSI 23
-      #define TFT_SCLK 18
-      #define TFT_CS 27
-      #define TFT_DC 26
-      #define TFT_RST 5
-      #define TFT_BL 32
-      #define TOUCH_CS 21
+      // ESP32-C5 Mini V3 TFT pins — shared SPI bus with SD card
+      #define TFT_MISO 24
+      #define TFT_MOSI 0
+      #define TFT_SCLK 26
+      #define TFT_CS 25
+      #define TFT_DC 23
+      #define TFT_RST 1
+      #define TFT_BL 3
+      #define TOUCH_CS -1
       #define SD_CS 4
+
+      #ifdef DUAL_MINI_C5
+        #define SD_DET 5
+      #endif
 
       #define SCREEN_BUFFER
 
@@ -2414,7 +2444,7 @@
     #endif
 
     #ifdef MARAUDER_MINI_V3
-      #define SD_CS 10
+      #define SD_CS 4
     #endif
 
   #endif
@@ -2645,8 +2675,8 @@
       #define GPS_RX 13
     #elif defined(MARAUDER_V8)
       #define GPS_SERIAL_INDEX 1
-      #define GPS_TX 14
-      #define GPS_RX 13
+      #define GPS_TX 13
+      #define GPS_RX 14
     #elif defined(MARAUDER_MINI_V3)
       #define GPS_SERIAL_INDEX 1
       #define GPS_TX 14
@@ -2913,5 +2943,9 @@
     #define HOP_DELAY 1000
   #else
     #define HOP_DELAY 250
+  #endif
+
+  #if defined(MARAUDER_XIAOMIAO)
+    #include "xiaomiao_config.h"
   #endif
 #endif
