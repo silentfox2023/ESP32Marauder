@@ -169,7 +169,7 @@ V8 与 XiaoMiao 移植时都踩过这个坑，修复方式就是把继承宏挪�
 | SD CS | 10（与 TFT 共享 MISO / MOSI / SCLK） |
 | GPS TX / RX | 13 / 14（Serial1，**写反即 GPS Not Found**） |
 
-> 布线版本差异：`docs/board_adapters/C5_V8_移植与修改说明书.md` 记录的是标准 V8 布线（MISO=5、MOSI=1、SCLK=9、CS=24、DC=10、RST=0、TOUCH_CS=4、BL=23、SD_CS=6、ACT_LED=28）。本仓库当前 `configs.h` 与已验证的改版 V8 一致，采用上表引脚；若换回标准 V8 板，请按文档改回对应引脚，两套布线不要混用。
+> 本仓库统一采用上表引脚，与 `configs.h` 的 `MARAUDER_V8` 块及 [C5 V8 移植与修改说明书](docs/board_adapters/C5_V8_移植与修改说明书.md) 完全一致：MISO=2 / MOSI=7 / SCLK=6 / CS=23 / DC=24 / TOUCH_CS=3 / BL=8 / SD_CS=10。早期标准 V8 的另一套布线仅作为历史备注记录在说明书 1.1 节，不在此处生效。
 
 - TFT_eSPI `User_Setup.h` 关键项：
 
@@ -180,8 +180,9 @@ V8 与 XiaoMiao 移植时都踩过这个坑，修复方式就是把继承宏挪�
 #define TFT_SCLK 6
 #define TFT_CS   23
 #define TFT_DC   24
+#define TFT_RST  0
 #define TOUCH_CS 3
-#define TFT_BL   8
+// 背光不写进 User_Setup.h，由 configs.h 的 TFT_BL 8 控制
 #define TFT_WIDTH  240
 #define TFT_HEIGHT 320
 #define SPI_FREQUENCY        10000000   // 先用 10MHz 求稳，再往上试
@@ -203,7 +204,7 @@ Arduino IDE 编译时只认全局库文件，切换板型必须逐项改完再**
 |---|---|---|---|
 | 驱动 / tab | `ST7735_DRIVER` + `ST7735_GREENTAB` | `ST7735_DRIVER` + `ST7735_GREENTAB3` | `ILI9341_DRIVER` |
 | 引脚（MISO/MOSI/SCLK/CS/DC） | -1 / 23 / 18 / 5 / 4 | 24 / 0 / 26 / 25 / 23 | 2 / 7 / 6 / 23 / 24 |
-| 复位 / 背光 | RST=-1，BL=32（空脚） | RST=1，BL=3 | BL=8 |
+| 复位 / 背光 | RST=-1，BL=32（空脚） | RST=1，BL=3 | RST=0，BL=8（`User_Setup.h` 不定义 BL） |
 | 分辨率 | 128×160 | 128×128 | 240×320 |
 | SPI 频率 | 10MHz | 4MHz 写 / 2MHz 读 | 10MHz（读 20MHz，触摸 2.5MHz） |
 | 其他 | `TFT_INVERSION_OFF`、`TFT_RGB_ORDER TFT_BGR` | bit-bang，禁止 `USE_HSPI_PORT` / `USE_FSPI_PORT` | `TOUCH_CS`=3，不开 `USE_HSPI_PORT` |
@@ -221,7 +222,7 @@ Arduino IDE 编译时只认全局库文件，切换板型必须逐项改完再**
 
 - [XiaoMiao 编译与配置说明书](docs/board_adapters/XiaoMiao_编译与配置说明书.md)
 - [ESP32-C5 Mini V3 编译与配置说明书](docs/board_adapters/ESP32C5_Mini_V3_编译与配置说明书.md)
-- [C5 V8 移植与修改说明书](docs/board_adapters/C5_V8_移植与修改说明书.md)（历史版本，引脚以 `configs.h` 为准）
+- [C5 V8 移植与修改说明书](docs/board_adapters/C5_V8_移植与修改说明书.md)
 
 # For Sale Now
 You can buy the ESP32 Marauder using [this link](https://www.justcallmekokollc.com)
